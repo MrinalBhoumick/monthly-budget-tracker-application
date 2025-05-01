@@ -71,7 +71,9 @@ else:
 
     if 'data' not in st.session_state:
         if os.path.exists(user_file):
-            st.session_state.data = pd.read_csv(user_file, parse_dates=['Date'])
+            df = pd.read_csv(user_file)
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+            st.session_state.data = df
         else:
             st.session_state.data = pd.DataFrame(columns=['Date', 'Category', 'Type', 'Amount', 'Note'])
 
@@ -83,7 +85,6 @@ else:
     sip = st.sidebar.number_input("SIP Investment (₹)", min_value=0, value=1500, step=100)
     gold_sip = st.sidebar.number_input("Gold SIP (₹)", min_value=0, value=2400, step=100)
 
-    # Logout button
     if st.sidebar.button("🚪 Logout"):
         st.session_state.logged_in = False
         st.session_state.username = ""
@@ -93,7 +94,7 @@ else:
     # ------------- Tabs ------------------
     tab1, tab2, tab3 = st.tabs(["➕ Add Entry", "📊 Dashboard", "📁 Export"])
 
-    # ------------- Tab 1: Add Entry ------------------
+    # Tab 1: Add Entry
     tab1.subheader("➕ Add a New Transaction")
     with tab1.form("entry_form"):
         date = st.date_input("Date", datetime.today())
@@ -108,21 +109,18 @@ else:
                                      columns=['Date', 'Category', 'Type', 'Amount', 'Note'])
             data = st.session_state.data
 
-            if data.empty:
-                data = new_entry
-            else:
-                data = pd.concat([data, new_entry], ignore_index=True)
-
+            data = pd.concat([data, new_entry], ignore_index=True)
+            data['Date'] = pd.to_datetime(data['Date'], errors='coerce')
             data.to_csv(user_file, index=False)
             st.session_state.data = data
             st.success("✅ Entry added!")
 
-    # ------------- Tab 2: Dashboard ------------------
+    # Tab 2: Dashboard
     with tab2:
         st.subheader(f"📊 Dashboard Summary - {st.session_state.username}")
         data = st.session_state.data
 
-        # Financial Summary
+        # Summary
         monthly_expenses = data[data['Type'] == 'Expense']['Amount'].sum()
         actual_income = data[data['Type'] == 'Income']['Amount'].sum() + monthly_income
         fixed_expenses = rent + loan + sip + gold_sip
@@ -136,7 +134,7 @@ else:
 
         st.divider()
 
-        # Pie Chart - Expenses by Category
+        # Pie Chart
         st.subheader("📌 Expense Breakdown")
         expense_data = data[data['Type'] == 'Expense']
         if not expense_data.empty:
@@ -149,7 +147,7 @@ else:
         st.subheader("📅 Monthly Trends")
         if not data.empty:
             trend_data = data.copy()
-            trend_data['Month'] = pd.to_datetime(trend_data['Date']).dt.to_period('M').astype(str)
+            trend_data['Month'] = pd.to_datetime(trend_data['Date'], errors='coerce').dt.to_period('M').astype(str)
             trend_summary = trend_data.groupby(['Month', 'Type'])['Amount'].sum().reset_index()
             fig_bar = px.bar(trend_summary, x='Month', y='Amount', color='Type', barmode='group',
                              title="Monthly Income & Expenses")
@@ -157,11 +155,12 @@ else:
         else:
             st.info("No transactions yet.")
 
-        # Full Data Table
+        # Data Table
         st.subheader("📋 All Transactions")
-        st.dataframe(data.sort_values(by="Date", ascending=False), use_container_width=True)
+        sorted_data = data.sort_values(by="Date", ascending=False, na_position="last")
+        st.dataframe(sorted_data, use_container_width=True)
 
-    # ------------- Tab 3: Export ------------------
+    # Tab 3: Export
     with tab3:
         st.subheader("📁 Export Budget to Excel")
         if st.button("Export to Excel"):

@@ -1,1 +1,8 @@
 .github/
+backend/.terraform/
+backend/.terraform.lock.hcl
+backend/terraform.tfstate.1746120551.backup
+backend/terraform.tfstate.1746120562.backup
+backend/terraform.tfstate.backup
+backend/terraform.tfstate
+backend/terraform.tfvars
