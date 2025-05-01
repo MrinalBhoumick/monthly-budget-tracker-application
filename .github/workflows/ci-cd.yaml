@@ -30,7 +30,7 @@ jobs:
       - name: Set Image Tag
         id: vars
         run: |
-          echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=latest" >> $GITHUB_ENV
 
       - name: Build, Tag and Push Docker Image
         run: |
@@ -39,40 +39,21 @@ jobs:
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
 
-      - name: Ensure container_definitions.json exists
-        run: |
-          if [ ! -f "container_definitions.json" ]; then
-            echo "Error: container_definitions.json file not found."
-            exit 1
-          fi
-
       - name: Deploy to ECS
         run: |
           CLUSTER_NAME=${{ secrets.ECS_CLUSTER }}
           SERVICE_NAME=${{ secrets.ECS_SERVICE }}
-          TASK_DEFINITION=${{ secrets.ECS_TASK_DEFINITION }}
+          TASK_DEFINITION_ARN=${{ secrets.ECS_TASK_DEFINITION }}
 
-          # Register the new ECS Task Definition revision
-          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --family $TASK_DEFINITION \
-            --container-definitions file://container_definitions.json \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-
-          # Update ECS Service with the new Task Definition
+          # Update ECS Service with the existing Task Definition
           aws ecs update-service \
             --cluster $CLUSTER_NAME \
             --service $SERVICE_NAME \
-            --task-definition $NEW_TASK_DEF_ARN
+            --task-definition $TASK_DEFINITION_ARN
 
-      - name: Image Pushed Successfully
-        run: echo "Image $IMAGE_TAG pushed to ECR ✅"
-
-      - name: Display Deployment Success Message
+      - name: Deployment Successful 🎉
         run: |
-          # Fetch ALB DNS name from GitHub Secrets
-          ALB_DNS="${{ secrets.ALB_DNS_NAME }}"
-
-          # Output the success message with emojis
-          echo "🎉 Congratulations! Your site has been successfully deployed to ECS! 🚀"
-          echo "🌐 You can access the site at: http://$ALB_DNS 🎉"
+          ALB_URL="http://${{ secrets.ALB_DNS_NAME }}"
+          echo "🎉 Congratulations! The site is deployed successfully 🎉"
+          echo "URL: $ALB_URL"
+          echo "Deployed to ECS and ALB URL: $ALB_URL" >> $GITHUB_ENV
