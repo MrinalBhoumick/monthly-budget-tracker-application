@@ -43,17 +43,25 @@ jobs:
         run: |
           CLUSTER_NAME=${{ secrets.ECS_CLUSTER }}
           SERVICE_NAME=${{ secrets.ECS_SERVICE }}
-          TASK_DEFINITION_ARN=${{ secrets.ECS_TASK_DEFINITION }}
+          TASK_DEFINITION=${{ secrets.ECS_TASK_DEFINITION }}
 
-          # Update ECS Service with the existing Task Definition
+          # Register the new ECS Task Definition revision
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --family $TASK_DEFINITION \
+            --container-definitions "[]"; # Use the appropriate JSON or remove if not needed \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          # Update ECS Service with the new Task Definition
           aws ecs update-service \
             --cluster $CLUSTER_NAME \
             --service $SERVICE_NAME \
-            --task-definition $TASK_DEFINITION_ARN
+            --task-definition $NEW_TASK_DEF_ARN
 
       - name: Deployment Successful 🎉
         run: |
-          ALB_URL="http://${{ secrets.ALB_DNS_NAME }}"
+          ALB_URL="budget-tracking-alb-563686057.ap-south-1.elb.amazonaws.com"
           echo "🎉 Congratulations! The site is deployed successfully 🎉"
-          echo "🌐 URL: $ALB_URL 🌐"
-          echo "🚀 Deployed to ECS and ALB URL: $ALB_URL 🚀"
+          echo "🌐 URL: http://$ALB_URL 🌐"
+          echo "🚀 Deployed to ECS and ALB URL: http://$ALB_URL 🚀"
+          echo "ALB URL: $ALB_URL" >> $GITHUB_ENV
