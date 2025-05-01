@@ -5,3 +5,4 @@ backend/terraform.tfstate.1746120562.backup
 backend/terraform.tfstate.backup
 backend/terraform.tfstate
 backend/terraform.tfvars
+.github/
