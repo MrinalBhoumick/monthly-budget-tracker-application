@@ -55,5 +55,5 @@ jobs:
         run: |
           ALB_URL="http://${{ secrets.ALB_DNS_NAME }}"
           echo "🎉 Congratulations! The site is deployed successfully 🎉"
-          echo "URL: $ALB_URL"
-          echo "Deployed to ECS and ALB URL: $ALB_URL" >> $GITHUB_ENV
+          echo "🌐 URL: $ALB_URL 🌐"
+          echo "🚀 Deployed to ECS and ALB URL: $ALB_URL 🚀"
