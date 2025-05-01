@@ -39,6 +39,13 @@ jobs:
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
 
+      - name: Ensure container_definitions.json exists
+        run: |
+          if [ ! -f "container_definitions.json" ]; then
+            echo "Error: container_definitions.json file not found."
+            exit 1
+          fi
+
       - name: Deploy to ECS
         run: |
           CLUSTER_NAME=${{ secrets.ECS_CLUSTER }}
@@ -60,3 +67,12 @@ jobs:
 
       - name: Image Pushed Successfully
         run: echo "Image $IMAGE_TAG pushed to ECR ✅"
+
+      - name: Display Deployment Success Message
+        run: |
+          # Fetch ALB DNS name from GitHub Secrets
+          ALB_DNS="${{ secrets.ALB_DNS_NAME }}"
+
+          # Output the success message with emojis
+          echo "🎉 Congratulations! Your site has been successfully deployed to ECS! 🚀"
+          echo "🌐 You can access the site at: http://$ALB_DNS 🎉"
