@@ -18,19 +18,19 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
+COPY requirements.txt . 
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
 COPY . .
 
-# Expose Streamlit default port
-EXPOSE 8501
+# Expose port 80
+EXPOSE 80
 
-# Streamlit config to allow external access (required for ECS)
+# Streamlit config to allow external access and bind to port 80
 ENV STREAMLIT_SERVER_ENABLECORS=false
 ENV STREAMLIT_SERVER_HEADLESS=true
-ENV STREAMLIT_SERVER_PORT=8501
+ENV STREAMLIT_SERVER_PORT=80
 
-# Command to run the app
-CMD ["streamlit", "run", "app.py"]
+# Command to run the app on port 80
+CMD ["streamlit", "run", "app.py", "--server.port=80"]
